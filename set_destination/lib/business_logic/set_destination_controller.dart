@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:set_destination/business_logic/data/load_address_wrapper.dart';
 import 'package:set_destination/business_logic/data/set_destination_datasource.dart';
-import 'package:set_destination/business_logic/eventstate.dart';
+import 'package:set_destination/business_logic/camera_eventstate.dart';
 import 'package:set_destination/business_logic/usecases/current_location_usecase.dart';
 import 'package:set_destination/business_logic/viewstate.dart';
 
@@ -18,7 +18,7 @@ class SetDestinationController extends GetxController{
 
   late final CurrentLocationUseCase _currentLocationUseCase;
 
-  Rx<EventState> eventState = EventState(
+  Rx<CameraEventState> eventState = CameraEventState(
       goToCurrentPosition: false,
       goToDestinationPosition: false,
       setZoomBoundsForDirection: false

@@ -1,19 +1,19 @@
-class EventState{
+class CameraEventState{
   final bool goToCurrentPosition;
   final bool goToDestinationPosition;
   final bool setZoomBoundsForDirection;
 
-  EventState(
+  CameraEventState(
       {required this.goToCurrentPosition,
       required this.goToDestinationPosition,
       required this.setZoomBoundsForDirection});
 
-  EventState copy({
+  CameraEventState copy({
      bool? goToCurrentPosition,
      bool? goToDestinationPosition,
      bool? setZoomBoundsForDirection,
   }){
-    return EventState(
+    return CameraEventState(
         goToCurrentPosition: goToCurrentPosition ?? this.goToCurrentPosition,
         goToDestinationPosition: goToDestinationPosition ?? this.goToDestinationPosition,
         setZoomBoundsForDirection: setZoomBoundsForDirection ?? this.setZoomBoundsForDirection

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:base/models/address.dart';
 import 'package:base/models/direction.dart';
 import 'package:geolocator/geolocator.dart';
@@ -32,10 +34,10 @@ class CurrentLocationUseCase{
 
         return viewState.copy(destinationPickedAddressWrapper: viewState.destinationPickedAddressWrapper.copy(address: address , loading: false));
       }
-    } catch(e){
+    } on SocketException catch(e){
       print("koko error getting the address > "+ e.toString());
       if (viewState.isPickingCurrentLocation!){
-        return viewState.copy(currentPickedAddressWrapper: viewState.currentPickedAddressWrapper.copy(error: e.toString() , loading: false));
+        return viewState.copy(currentPickedAddressWrapper: viewState.currentPickedAddressWrapper.copy(error: "It appears that there is a problem with your network" , loading: false));
       } else {
         return viewState.copy(destinationPickedAddressWrapper: viewState.destinationPickedAddressWrapper.copy(error: e.toString() , loading: false));
       }
@@ -47,7 +49,7 @@ class CurrentLocationUseCase{
     try{
       Direction direction = await _dataSource.getDirection(viewState.currentPosition.latitude, viewState.currentPosition.longitude, viewState.destinationPosition!.latitude, viewState.destinationPosition!.longitude);
       return viewState.copy(direction: direction);
-    }catch(e){
+    } catch(e){
       print("koko error distination" + e.toString());
       return viewState;
     }
