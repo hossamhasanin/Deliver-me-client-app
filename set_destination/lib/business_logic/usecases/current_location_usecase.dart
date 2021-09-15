@@ -15,7 +15,7 @@ class CurrentLocationUseCase{
     Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
 
     print("koko current location > "+ position.latitude.toString() + " , " + position.longitude.toString());
-    return viewState.copy(currentPosition: LatLng(position.latitude, position.longitude) , destinationPosition: LatLng(position.latitude, position.longitude) , currentPickedAddressWrapper: viewState.currentPickedAddressWrapper.copy(loading: true));
+    return viewState.copy(currentPosition: LatLng(position.latitude, position.longitude) , cameraPosition: LatLng(position.latitude, position.longitude) , currentPickedAddressWrapper: viewState.currentPickedAddressWrapper.copy(loading: true));
   }
 
   Future<ViewState> getAddress(ViewState viewState) async{

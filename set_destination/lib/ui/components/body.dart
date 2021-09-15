@@ -36,28 +36,16 @@ class _BodyState extends State<Body> {
 
     _setDestinationController.getCurrentPosition();
 
-    ever(_setDestinationController.viewState, (_) {
-
-      if (_setDestinationController.viewState.value.isPickingCurrentLocation != null){
-        if (_setDestinationController.viewState.value.isPickingCurrentLocation!){
-          if (_selectedPosition.target.longitude != _setDestinationController.viewState.value.currentPosition.longitude &&
-              _selectedPosition.target.latitude != _setDestinationController.viewState.value.currentPosition.latitude){
-            _googleMapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: _setDestinationController.viewState.value.currentPosition , zoom: 14)));
-          }
-        } else {
-
-          if (_setDestinationController.viewState.value.destinationPosition != null){
-            if (_selectedPosition.target.longitude != _setDestinationController.viewState.value.destinationPosition!.longitude &&
-                _selectedPosition.target.latitude != _setDestinationController.viewState.value.destinationPosition!.latitude){
-              _googleMapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: _setDestinationController.viewState.value.destinationPosition! , zoom: 14)));
-            }
-          }
-
-        }
+    ever(_setDestinationController.eventState , (_){
+      if (_setDestinationController.eventState.value.goToCurrentPosition){
+        _googleMapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: _setDestinationController.viewState.value.currentPosition , zoom: 14)));
       }
 
-      if (_setDestinationController.viewState.value.polyLines.isNotEmpty){
+      if (_setDestinationController.eventState.value.goToDestinationPosition){
+        _googleMapController?.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: _setDestinationController.viewState.value.destinationPosition! , zoom: 14)));
+      }
 
+      if (_setDestinationController.eventState.value.setZoomBoundsForDirection){
         LatLngBounds latLngBounds;
 
         if (_setDestinationController.viewState.value.currentPosition.latitude > _setDestinationController.viewState.value.destinationPosition!.latitude &&
@@ -74,9 +62,8 @@ class _BodyState extends State<Body> {
         _googleMapController?.animateCamera(CameraUpdate.newLatLngBounds(latLngBounds, 70));
 
       }
-
-
     });
+
   }
 
   @override
@@ -99,8 +86,8 @@ class _BodyState extends State<Body> {
             onCameraMove: (CameraPosition cameraPosition){
               _selectedPosition = cameraPosition;
             },
-            onCameraIdle: (){
-              _setDestinationController.updatePosition(
+            onCameraIdle: () async {
+              await _setDestinationController.updatePosition(
                   _selectedPosition.target);
             },
           ),
@@ -141,8 +128,8 @@ class _BodyState extends State<Body> {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                      onPressed: () {
-                        _setDestinationController.setDirections();
+                      onPressed: () async {
+                        await _setDestinationController.setDirections();
                       },
                       child: const Text("Set route"),
                     ),

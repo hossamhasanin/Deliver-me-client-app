@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:set_destination/business_logic/data/load_address_wrapper.dart';
 
 class ViewState{
+  final LatLng cameraPosition;
   final LatLng currentPosition;
   final LatLng? destinationPosition;
   final LoadAddressWrapper currentPickedAddressWrapper;
@@ -15,10 +16,11 @@ class ViewState{
   final Set<Circle> circles;
   final bool stopPicking;
 
-  ViewState({required this.stopPicking , required this.markers , required this.circles , required this.polyLines , required this.direction , required this.destinationPosition , required this.isPickingCurrentLocation , required this.destinationPickedAddressWrapper , required this.currentPosition, required this.currentPickedAddressWrapper});
+  ViewState({required this.cameraPosition , required this.stopPicking , required this.markers , required this.circles , required this.polyLines , required this.direction , required this.destinationPosition , required this.isPickingCurrentLocation , required this.destinationPickedAddressWrapper , required this.currentPosition, required this.currentPickedAddressWrapper});
 
 
   ViewState copy({
+    LatLng? cameraPosition,
     LatLng? currentPosition,
     LatLng? destinationPosition,
     LoadAddressWrapper? currentPickedAddressWrapper,
@@ -31,6 +33,7 @@ class ViewState{
     Set<Circle>? circles,
   }){
     return ViewState(
+        cameraPosition: cameraPosition ?? this.cameraPosition,
         currentPosition: currentPosition ?? this.currentPosition,
         destinationPosition: destinationPosition ?? this.destinationPosition,
         currentPickedAddressWrapper: currentPickedAddressWrapper?? this.currentPickedAddressWrapper,

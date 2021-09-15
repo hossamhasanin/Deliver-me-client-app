@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:set_destination/business_logic/data/load_address_wrapper.dart';
 import 'package:set_destination/business_logic/data/set_destination_datasource.dart';
+import 'package:set_destination/business_logic/eventstate.dart';
 import 'package:set_destination/business_logic/usecases/current_location_usecase.dart';
 import 'package:set_destination/business_logic/viewstate.dart';
 
@@ -22,8 +23,15 @@ class SetDestinationController extends GetxController{
   final MarkerId pickUpMarkerId = const MarkerId("pickUpMarker");
   final MarkerId dropOffMarkerId = const MarkerId("dropOffMarker");
 
+  Rx<EventState> eventState = EventState(
+      goToCurrentPosition: false,
+      goToDestinationPosition: false,
+      setZoomBoundsForDirection: false
+  ).obs;
+
   SetDestinationController(SetDestinationDataSource dataSource){
     viewState = ViewState(
+        cameraPosition: _initPosition,
         currentPosition: _initPosition,
         destinationPosition: null,
         currentPickedAddressWrapper: LoadAddressWrapper(
@@ -50,6 +58,7 @@ class SetDestinationController extends GetxController{
   Future getCurrentPosition() async{
     viewState.value = await _currentLocationUseCase.getCurrentLocation(viewState.value);
     viewState.value = await _currentLocationUseCase.getAddress(viewState.value);
+    moveCameraToCurrentLocation();
   }
 
   Future updatePosition(LatLng position) async {
@@ -63,7 +72,7 @@ class SetDestinationController extends GetxController{
           position.longitude == viewState.value.currentPosition.longitude){
         return;
       }
-      viewState.value = viewState.value.copy(currentPosition: position , currentPickedAddressWrapper: viewState.value.currentPickedAddressWrapper.copy(loading: true));
+      viewState.value = viewState.value.copy(currentPosition: position , cameraPosition: position , currentPickedAddressWrapper: viewState.value.currentPickedAddressWrapper.copy(loading: true));
       // viewState.value = await _currentLocationUseCase.getAddress(viewState.value);
     } else {
 
@@ -74,30 +83,21 @@ class SetDestinationController extends GetxController{
         }
       }
 
-      viewState.value = viewState.value.copy(destinationPosition: position , destinationPickedAddressWrapper: viewState.value.destinationPickedAddressWrapper.copy(loading: true));
+      viewState.value = viewState.value.copy(destinationPosition: position , cameraPosition: position , destinationPickedAddressWrapper: viewState.value.destinationPickedAddressWrapper.copy(loading: true));
 
     }
 
     viewState.value = await _currentLocationUseCase.getAddress(viewState.value);
 
-    // if (viewState.value.destinationPosition != null){
-    //
-    //   if (position.latitude == viewState.value.currentPosition.latitude &&
-    //       position.longitude == viewState.value.currentPosition.longitude){
-    //     return;
-    //   }
-    //
-    //   if (position.latitude == viewState.value.destinationPosition!.latitude &&
-    //       position.longitude == viewState.value.destinationPosition!.longitude){
-    //     return;
-    //   }
-    //
-    //
-    // }
 
   }
 
   Future setDirections() async {
+
+    if (viewState.value.destinationPosition == null){
+      return;
+    }
+
     viewState.value = await _currentLocationUseCase.getDirections(viewState.value);
     List<LatLng> coordinates = polylinePoints.decodePolyline(viewState.value.direction!.encodedDirections)
         .map((point) => LatLng(point.latitude, point.longitude)).toList();
@@ -146,10 +146,51 @@ class SetDestinationController extends GetxController{
     );
 
     viewState.value = viewState.value.copy(polyLines: {polyline} , markers: {pickUpMarker , dropOffMarker} , circles: {pickUpCircle , dropOffCircle} , stopPicking: true , isPickingCurrentLocation: null);
+    setTheZoomForDestination();
   }
 
   changePicking(bool current){
     viewState.value = viewState.value.copy(isPickingCurrentLocation: current , stopPicking: false , markers: {} , circles: {} , polyLines: {});
+    if (current){
+      if (viewState.value.cameraPosition.latitude != viewState.value.currentPosition.latitude &&
+          viewState.value.cameraPosition.longitude != viewState.value.currentPosition.longitude){
+        moveCameraToCurrentLocation();
+      }
+    } else {
+      if (viewState.value.destinationPosition != null){
+        if (viewState.value.cameraPosition.latitude != viewState.value.destinationPosition!.latitude &&
+            viewState.value.cameraPosition.longitude != viewState.value.destinationPosition!.longitude){
+          moveCameraToDestinationLocation();
+        }
+      }
+    }
+  }
+
+  moveCameraToCurrentLocation(){
+    eventState.value = eventState.value.copy(
+        goToCurrentPosition: true
+    );
+    eventState.value = eventState.value.copy(
+        goToCurrentPosition: false
+    );
+  }
+
+  moveCameraToDestinationLocation(){
+    eventState.value = eventState.value.copy(
+        goToDestinationPosition: true
+    );
+    eventState.value = eventState.value.copy(
+        goToDestinationPosition: false
+    );
+  }
+
+  setTheZoomForDestination(){
+    eventState.value = eventState.value.copy(
+        setZoomBoundsForDirection: true
+    );
+    eventState.value = eventState.value.copy(
+        setZoomBoundsForDirection: false
+    );
   }
 
 }
