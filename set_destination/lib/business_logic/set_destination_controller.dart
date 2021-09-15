@@ -1,4 +1,5 @@
 import 'package:base/models/address.dart';
+import 'package:base/models/direction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:get/get.dart';
@@ -16,12 +17,6 @@ class SetDestinationController extends GetxController{
   late Rx<ViewState> viewState;
 
   late final CurrentLocationUseCase _currentLocationUseCase;
-
-  final PolylinePoints polylinePoints = PolylinePoints();
-
-  final PolylineId polylineTripId = const PolylineId("tripRoute");
-  final MarkerId pickUpMarkerId = const MarkerId("pickUpMarker");
-  final MarkerId dropOffMarkerId = const MarkerId("dropOffMarker");
 
   Rx<EventState> eventState = EventState(
       goToCurrentPosition: false,
@@ -45,10 +40,7 @@ class SetDestinationController extends GetxController{
             loading: false
         ),
         isPickingCurrentLocation: true,
-        direction: null,
-        polyLines: {},
-        markers: {},
-        circles: {},
+        direction: Direction(distanceText: "", durationText: "", distanceValue: 0, durationValue: 0, encodedDirections: ""),
         stopPicking: false
     ).obs;
 
@@ -94,63 +86,19 @@ class SetDestinationController extends GetxController{
 
   Future setDirections() async {
 
-    if (viewState.value.destinationPosition == null){
+    if (viewState.value.destinationPosition == null || viewState.value.direction.distanceText.isNotEmpty){
       return;
     }
 
     viewState.value = await _currentLocationUseCase.getDirections(viewState.value);
-    List<LatLng> coordinates = polylinePoints.decodePolyline(viewState.value.direction!.encodedDirections)
-        .map((point) => LatLng(point.latitude, point.longitude)).toList();
 
-    Polyline polyline = Polyline(
-        polylineId: polylineTripId,
-        points: coordinates,
-        color: Colors.red,
-        jointType: JointType.round,
-        width: 5,
-        startCap: Cap.roundCap,
-        endCap: Cap.roundCap,
-        geodesic: true
-    );
 
-    Marker pickUpMarker = Marker(
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        markerId: pickUpMarkerId,
-        infoWindow: InfoWindow(title: viewState.value.currentPickedAddressWrapper.address.name , snippet: "My location"),
-        position: viewState.value.currentPosition
-    );
-
-    Marker dropOffMarker = Marker(
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-        markerId: dropOffMarkerId,
-        infoWindow: InfoWindow(title: viewState.value.destinationPickedAddressWrapper.address.name , snippet: "Drop off location"),
-        position: viewState.value.destinationPosition!
-    );
-
-    Circle pickUpCircle = Circle(
-        circleId: CircleId("pickUp"),
-        center: viewState.value.currentPosition,
-        radius: 12,
-        strokeWidth: 4,
-        strokeColor: Colors.red,
-        fillColor: Colors.red
-    );
-
-    Circle dropOffCircle = Circle(
-        circleId: CircleId("dropOff"),
-        center: viewState.value.destinationPosition!,
-        radius: 12,
-        strokeWidth: 4,
-        strokeColor: Colors.blue,
-        fillColor: Colors.blue
-    );
-
-    viewState.value = viewState.value.copy(polyLines: {polyline} , markers: {pickUpMarker , dropOffMarker} , circles: {pickUpCircle , dropOffCircle} , stopPicking: true , isPickingCurrentLocation: null);
+    viewState.value = viewState.value.copy(stopPicking: true , isPickingCurrentLocation: null);
     setTheZoomForDestination();
   }
 
   changePicking(bool current){
-    viewState.value = viewState.value.copy(isPickingCurrentLocation: current , stopPicking: false , markers: {} , circles: {} , polyLines: {});
+    viewState.value = viewState.value.copy(isPickingCurrentLocation: current , stopPicking: false , direction: Direction(distanceText: "", durationText: "", distanceValue: 0, durationValue: 0, encodedDirections: ""));
     if (current){
       if (viewState.value.cameraPosition.latitude != viewState.value.currentPosition.latitude &&
           viewState.value.cameraPosition.longitude != viewState.value.currentPosition.longitude){

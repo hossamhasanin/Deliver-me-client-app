@@ -10,13 +10,10 @@ class ViewState{
   final LoadAddressWrapper currentPickedAddressWrapper;
   final LoadAddressWrapper destinationPickedAddressWrapper;
   final bool? isPickingCurrentLocation;
-  final Direction? direction;
-  final Set<Polyline> polyLines;
-  final Set<Marker> markers;
-  final Set<Circle> circles;
+  final Direction direction;
   final bool stopPicking;
 
-  ViewState({required this.cameraPosition , required this.stopPicking , required this.markers , required this.circles , required this.polyLines , required this.direction , required this.destinationPosition , required this.isPickingCurrentLocation , required this.destinationPickedAddressWrapper , required this.currentPosition, required this.currentPickedAddressWrapper});
+  ViewState({required this.cameraPosition , required this.stopPicking , required this.direction , required this.destinationPosition , required this.isPickingCurrentLocation , required this.destinationPickedAddressWrapper , required this.currentPosition, required this.currentPickedAddressWrapper});
 
 
   ViewState copy({
@@ -40,9 +37,6 @@ class ViewState{
         destinationPickedAddressWrapper: destinationPickedAddressWrapper?? this.destinationPickedAddressWrapper,
         isPickingCurrentLocation: isPickingCurrentLocation?? this.isPickingCurrentLocation,
         direction: direction ?? this.direction,
-        polyLines: polyLines ?? this.polyLines,
-        markers: markers ?? this.markers,
-        circles: circles ?? this.circles,
         stopPicking: stopPicking ?? this.stopPicking
     );
   }
@@ -51,6 +45,7 @@ class ViewState{
     return destinationPosition != null &&
            currentPickedAddressWrapper.address.id.isNotEmpty &&
            destinationPickedAddressWrapper.address.id.isNotEmpty &&
-           direction != null;
+           direction.distanceText.isNotEmpty;
   }
+
 }

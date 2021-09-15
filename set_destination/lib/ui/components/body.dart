@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:base/models/address.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:set_destination/business_logic/data/load_address_wrapper.dart';
@@ -26,6 +27,20 @@ class _BodyState extends State<Body> {
   CameraPosition? _initPosition;
 
 
+  final PolylinePoints polylinePoints = PolylinePoints();
+
+  final PolylineId polylineTripId = const PolylineId("tripRoute");
+  final MarkerId pickUpMarkerId = const MarkerId("pickUpMarker");
+  final MarkerId dropOffMarkerId = const MarkerId("dropOffMarker");
+
+
+  late Polyline polyline;
+  late Marker pickUpMarker;
+  late Marker dropOffMarker;
+  late Circle pickUpCircle;
+  late Circle dropOffCircle;
+  List<LatLng> coordinates = [];
+
 
   @override
   void initState() {
@@ -33,6 +48,45 @@ class _BodyState extends State<Body> {
     super.initState();
 
     _initPosition = _selectedPosition;
+
+    polyline = Polyline(
+        polylineId: polylineTripId,
+        color: Colors.red,
+        jointType: JointType.round,
+        width: 5,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        geodesic: true
+    );
+
+    pickUpMarker = Marker(
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      markerId: pickUpMarkerId,
+      infoWindow: InfoWindow(title: _setDestinationController.viewState.value.currentPickedAddressWrapper.address.name , snippet: "My location"),
+    );
+
+    dropOffMarker = Marker(
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+      markerId: dropOffMarkerId,
+      infoWindow: InfoWindow(title: _setDestinationController.viewState.value.destinationPickedAddressWrapper.address.name , snippet: "Drop off location"),
+    );
+
+    pickUpCircle = const Circle(
+        circleId: CircleId("pickUp"),
+        radius: 12,
+        strokeWidth: 4,
+        strokeColor: Colors.red,
+        fillColor: Colors.red
+    );
+
+    dropOffCircle = const Circle(
+        circleId: CircleId("dropOff"),
+        radius: 12,
+        strokeWidth: 4,
+        strokeColor: Colors.blue,
+        fillColor: Colors.blue
+    );
+
 
     _setDestinationController.getCurrentPosition();
 
@@ -64,6 +118,18 @@ class _BodyState extends State<Body> {
       }
     });
 
+    ever(_setDestinationController.viewState , (_){
+      if (_setDestinationController.viewState.value.direction.distanceText.isNotEmpty){
+        coordinates = polylinePoints.decodePolyline(_setDestinationController.viewState.value.direction!.encodedDirections)
+            .map((point) => LatLng(point.latitude, point.longitude)).toList();
+        polyline = polyline.copyWith(pointsParam: coordinates);
+        pickUpMarker = pickUpMarker.copyWith(positionParam: _setDestinationController.viewState.value.currentPosition);
+        dropOffMarker = dropOffMarker.copyWith(positionParam: _setDestinationController.viewState.value.destinationPosition!);
+        pickUpCircle = pickUpCircle.copyWith(centerParam: _setDestinationController.viewState.value.currentPosition);
+        dropOffCircle = dropOffCircle.copyWith(centerParam: _setDestinationController.viewState.value.destinationPosition!);
+      }
+    });
+
   }
 
   @override
@@ -75,9 +141,9 @@ class _BodyState extends State<Body> {
             mapType: MapType.normal,
             myLocationButtonEnabled: false,
             myLocationEnabled: true,
-            polylines: _setDestinationController.viewState.value.polyLines,
-            markers: _setDestinationController.viewState.value.markers,
-            circles: _setDestinationController.viewState.value.circles,
+            polylines: _setDestinationController.viewState.value.direction.distanceText.isNotEmpty ? {polyline} : {},
+            markers: _setDestinationController.viewState.value.direction.distanceText.isNotEmpty ? {pickUpMarker , dropOffMarker} : {},
+            circles: _setDestinationController.viewState.value.direction.distanceText.isNotEmpty ? {pickUpCircle , dropOffCircle} : {},
             initialCameraPosition: _initPosition!,
             onMapCreated: (GoogleMapController mapController){
               _mainMapCompleter.complete(mapController);
@@ -99,7 +165,7 @@ class _BodyState extends State<Body> {
             right: 0.0,
             child: Column(
               children: [
-                locationCard(_setDestinationController.viewState.value.currentPickedAddressWrapper ,
+                locationCard("Pick up from :" , _setDestinationController.viewState.value.currentPickedAddressWrapper ,
                     _setDestinationController.viewState.value.stopPicking ? false : _setDestinationController.viewState.value.isPickingCurrentLocation! ,
                     (){
                       if (_setDestinationController.viewState.value.isPickingCurrentLocation != null){
@@ -111,7 +177,7 @@ class _BodyState extends State<Body> {
 
                       _setDestinationController.changePicking(true);
                     }),
-                locationCard(_setDestinationController.viewState.value.destinationPickedAddressWrapper ,
+                locationCard("Drop off :" , _setDestinationController.viewState.value.destinationPickedAddressWrapper ,
                     _setDestinationController.viewState.value.stopPicking ? false : !_setDestinationController.viewState.value.isPickingCurrentLocation!,
                     (){
                       if (_setDestinationController.viewState.value.isPickingCurrentLocation != null){
@@ -200,7 +266,7 @@ class _BodyState extends State<Body> {
     );
   }
 
-  Widget locationCard(LoadAddressWrapper addressWrapper , bool isPicking , Function() pickDone) {
+  Widget locationCard(String title , LoadAddressWrapper addressWrapper , bool isPicking , Function() pickDone) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
@@ -210,9 +276,20 @@ class _BodyState extends State<Body> {
           children: <Widget>[
             Flexible(
               flex: 20,
-              child: addressWrapper.loading ? const CircularProgressIndicator():
-              addressWrapper.error.isNotEmpty? Text("Error: "+ addressWrapper.error):
-              Text(addressWrapper.address.name),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                  const SizedBox(height: 10.0,),
+                  addressWrapper.loading ? const CircularProgressIndicator():
+                  addressWrapper.error.isNotEmpty? Text("Error: "+ addressWrapper.error):
+                  Text(addressWrapper.address.name),
+                ])
             ),
             const Spacer(),
             FloatingActionButton(
