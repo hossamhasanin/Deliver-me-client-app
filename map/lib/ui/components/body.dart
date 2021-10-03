@@ -2,10 +2,21 @@ import 'dart:async';
 
 import 'package:base/base.dart';
 import 'package:base/configs.dart';
+import 'package:base/models/location.dart';
+import 'package:base/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:base/models/destination_result.dart';
+import 'package:map/business_logic/data/driver_data.dart';
+import 'package:map/business_logic/map_controller.dart';
+import 'package:map/business_logic/payment_methods.dart';
+import 'package:map/ui/components/pay_online.dart';
+import 'package:map/ui/components/payment_method.dart';
+import 'package:map/ui/components/pick_destination.dart';
+import 'package:map/ui/components/show_car_types.dart';
+
+import 'assign_car.dart';
 
 class Body extends StatefulWidget {
   const Body({Key? key}) : super(key: key);
@@ -24,19 +35,145 @@ class _BodyState extends State<Body> {
   Completer<GoogleMapController> _mainMapCompleter = Completer();
   GoogleMapController? _googleMapController;
 
+  final MapController _controller = Get.find();
+
+  final PageController _pageController = PageController();
+
+  final PolylineId polylineTripId = const PolylineId("tripRoute");
+  final MarkerId pickUpMarkerId = const MarkerId("pickUpMarker");
+  final MarkerId dropOffMarkerId = const MarkerId("dropOffMarker");
+
+
+  late Polyline polyline;
+  late Marker pickUpMarker;
+  late Marker dropOffMarker;
+  late Marker driverMarker;
+  late Circle pickUpCircle;
+  late Circle dropOffCircle;
+  List<LatLng> coordinates = [];
+
+
+  final Set<Marker> markers = {};
+
+  @override
+  void initState() {
+    super.initState();
+
+    polyline = Polyline(
+        polylineId: polylineTripId,
+        color: Colors.red,
+        jointType: JointType.round,
+        width: 5,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        geodesic: true
+    );
+
+    pickUpMarker = Marker(
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      markerId: pickUpMarkerId,
+    );
+
+    dropOffMarker = Marker(
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+      markerId: dropOffMarkerId,
+    );
+
+    driverMarker = const Marker(
+      markerId: MarkerId("driverId"),
+    );
+
+    BitmapDescriptor.fromAssetImage(const ImageConfiguration(devicePixelRatio: 10), "assets/images/automobile.png")
+        .then((value) {
+        driverMarker = driverMarker.copyWith(iconParam: value);
+    });
+
+    pickUpCircle = const Circle(
+        circleId: CircleId("pickUp"),
+        radius: 12,
+        strokeWidth: 4,
+        strokeColor: Colors.red,
+        fillColor: Colors.red
+    );
+
+    dropOffCircle = const Circle(
+        circleId: CircleId("dropOff"),
+        radius: 12,
+        strokeWidth: 4,
+        strokeColor: Colors.blue,
+        fillColor: Colors.blue
+    );
+
+
+
+    ever(_controller.viewState, (_) {
+      if (_pageController.page != _controller.viewState.value.page){
+        _pageController.animateToPage(_controller.viewState.value.page, duration: const Duration(milliseconds: 500), curve: Curves.bounceIn);
+      }
+    });
+
+    ever(_controller.destinationResult , (_){
+      if (_controller.destinationResult.value != null){
+        LatLngBounds latLngBounds;
+
+        if (_controller.destinationResult.value!.pickUpLatitude > _controller.destinationResult.value!.dropOffLatitude &&
+            _controller.destinationResult.value!.pickUpLongitude > _controller.destinationResult.value!.dropOffLongitude){
+          latLngBounds = LatLngBounds(southwest: LatLng(_controller.destinationResult.value!.dropOffLatitude, _controller.destinationResult.value!.dropOffLongitude), northeast: LatLng(_controller.destinationResult.value!.pickUpLatitude, _controller.destinationResult.value!.pickUpLongitude));
+        } else if (_controller.destinationResult.value!.pickUpLongitude > _controller.destinationResult.value!.dropOffLongitude){
+          latLngBounds = LatLngBounds(southwest: LatLng(_controller.destinationResult.value!.pickUpLatitude , _controller.destinationResult.value!.dropOffLongitude), northeast: LatLng(_controller.destinationResult.value!.dropOffLatitude , _controller.destinationResult.value!.pickUpLongitude));
+        } else if (_controller.destinationResult.value!.pickUpLatitude > _controller.destinationResult.value!.dropOffLatitude){
+          latLngBounds = LatLngBounds(southwest: LatLng(_controller.destinationResult.value!.dropOffLatitude, _controller.destinationResult.value!.pickUpLongitude), northeast: LatLng(_controller.destinationResult.value!.pickUpLatitude , _controller.destinationResult.value!.dropOffLongitude));
+        } else {
+          latLngBounds = LatLngBounds(southwest: LatLng(_controller.destinationResult.value!.pickUpLatitude, _controller.destinationResult.value!.pickUpLongitude), northeast: LatLng(_controller.destinationResult.value!.dropOffLatitude, _controller.destinationResult.value!.dropOffLongitude));
+        }
+
+        _googleMapController?.animateCamera(CameraUpdate.newLatLngBounds(latLngBounds, 70));
+
+      }
+    });
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        GoogleMap(
-          mapType: MapType.normal,
-          initialCameraPosition: _kGooglePlex,
-          onMapCreated: (GoogleMapController mapController){
-            _mainMapCompleter.complete(mapController);
-            _googleMapController = mapController;
-          },
-        ),
+        Obx((){
+
+          if (_controller.destinationResult.value != null){
+            pickUpMarker = pickUpMarker.copyWith(
+                positionParam: LatLng(_controller.destinationResult.value!.pickUpLatitude, _controller.destinationResult.value!.pickUpLongitude),
+                infoWindowParam: InfoWindow(title: _controller.destinationResult.value!.pickUpAddress.name , snippet: "My location"));
+            dropOffMarker = dropOffMarker.copyWith(
+                positionParam: LatLng(_controller.destinationResult.value!.dropOffLatitude, _controller.destinationResult.value!.dropOffLongitude),
+                infoWindowParam: InfoWindow(title: _controller.destinationResult.value!.dropOffAddress.name , snippet: "Drop off location"));
+            polyline = polyline.copyWith(pointsParam: _controller.destinationResult.value!.polyLinePoints as List<LatLng>);
+            pickUpCircle = pickUpCircle.copyWith(centerParam: LatLng(_controller.destinationResult.value!.pickUpLatitude, _controller.destinationResult.value!.pickUpLongitude));
+            dropOffCircle = dropOffCircle.copyWith(centerParam: LatLng(_controller.destinationResult.value!.dropOffLatitude, _controller.destinationResult.value!.dropOffLongitude));
+
+            markers.addAll([pickUpMarker , dropOffMarker]);
+          }
+
+          if (_controller.driverData.value.location != null){
+            driverMarker = driverMarker.copyWith(
+                positionParam: LatLng(_controller.driverData.value.location!.latitude!, _controller.driverData.value.location!.longitude!),
+                infoWindowParam: InfoWindow(title: "The driver" , snippet: _controller.driverData.value.driverPersonalData!.name));
+            markers.add(driverMarker);
+          }
+
+          return GoogleMap(
+            mapType: MapType.normal,
+            initialCameraPosition: _kGooglePlex,
+            polylines: _controller.destinationResult.value != null ? {polyline} : {},
+            markers: markers,
+            circles: _controller.destinationResult.value != null ? {pickUpCircle , dropOffCircle} : {},
+            onMapCreated: (GoogleMapController mapController){
+              _mainMapCompleter.complete(mapController);
+              _googleMapController = mapController;
+            },
+          );
+        }),
 
         Positioned(
             bottom: 0.0,
@@ -55,90 +192,78 @@ class _BodyState extends State<Body> {
                   )
                 ]
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top:15.0 , bottom: 5.0),
-                      child: Text(
-                      "Where to ?",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18.0
-                        ),
-                      ),
-                    ),
-                    // Search box
-                    GestureDetector(
-                      onTap: () async{
-                        DestinationResult? result = await Get.toNamed(SET_DESTINATION_SCREEN);
-                        if (result != null){
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  PickDestination(
+                    pickDestination: () async {
+                      var result = await Get.toNamed(SET_DESTINATION_SCREEN);
+                      if (result != null){
+                        _controller.setDestination(result as DestinationResult);
+                        await _controller.getCarTypes();
+                      }
+                      print(result.runtimeType);
+                      // await _controller.getCarTypes();
 
+                    },
+                  ),
+                  GetX<MapController>(builder: (_){
+                    return ShowCarTypes(
+                      loading: _controller.viewState.value.loading,
+                      error: _controller.viewState.value.error,
+                      carTypes: _controller.viewState.value.carTypes,
+                      selectedCarType: _controller.dataCarrier.value.selectedCarType,
+                      nextButtonAction: (){
+                        if (_controller.dataCarrier.value.selectedCarType != null){
+                          _controller.getToPaymentMethod();
                         }
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          height: 40.0,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10.0),
-                            border: Border.all(color: Colors.grey)
-                          ),
-                          child: Row(
-                            children: const [
-                              SizedBox(width: 10.0),
-                              Icon(Icons.search_rounded , color: Colors.black),
-                              SizedBox(width: 10.0),
-                              Text("choose your destination")
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Divider(),
-
-                    // Home location item
-                    Row(
-                      children: [
-                        const SizedBox(width: 10.0,),
-                        Container(
-                          height: 50.0,
-                          width: 50.0,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.deepOrangeAccent
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.home , color: Colors.white),
-                          ),
-                        ),
-                        const SizedBox(width: 20.0),
-                        const Text("Your home location")
-                      ],
-                    ),
-                    const Divider(),
-                    // Work location item
-                    Row(
-                      children: [
-                        const SizedBox(width: 10.0,),
-                        Container(
-                          height: 50.0,
-                          width: 50.0,
-                          decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.deepOrangeAccent
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.work_outline , color: Colors.white),
-                          ),
-                        ),
-                        const SizedBox(width: 20.0),
-                        const Text("Your work location")
-                      ],
-                    ),
-                    const Divider(),
-                  ],
-                ),
+                      selectCarType: (carType){
+                        _controller.selectCarType(carType);
+                      },
+                    );
+                  }),
+                  GetX<MapController>(builder: (_){
+                    return PaymentMethod(
+                        selectedPayment: _controller.dataCarrier.value.paymentMethod,
+                        nextButtonAction: (){
+                          if (_controller.dataCarrier.value.paymentMethod == PaymentMethods.creditCard){
+                            showModalBottomSheet(context: context, builder: (context){
+                              return PayOnline(
+                                payAction: (){
+                                  Navigator.pop(context);
+                                  _controller.goToDriverAssigning();
+                                },
+                              );
+                            });
+                          } else if (_controller.dataCarrier.value.paymentMethod == PaymentMethods.cash){
+                            _controller.goToDriverAssigning();
+                          }
+                        },
+                        selectPaymentMethod: (paymentMethod){
+                          _controller.selectPayment(paymentMethod);
+                        }
+                    );
+                  },),
+                  GetX<MapController>(
+                    builder: (_){
+                      return AssignCar(driverData: _controller.driverData.value,durationTillDriverCome: "1 mill",);
+                    },
+                  )
+                  // AssignCar(driverData: DriverData(
+                  //   location: Location(latitude: 0.0, longitude: 0.0),
+                  //   driverPersonalData: User(
+                  //     id: "",
+                  //     name: "koko",
+                  //     email: "koko",
+                  //     phone: "koko",
+                  //     img: "koko"
+                  //   ),
+                  // ),
+                  // durationTillDriverCome: "1 mil",
+                  // )
+                ],
               ),
             )
         )

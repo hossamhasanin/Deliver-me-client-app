@@ -11,6 +11,7 @@ class DestinationResult extends Equatable{
   final double dropOffLongitude;
   final Address pickUpAddress;
   final Address dropOffAddress;
+  final List polyLinePoints;
 
   DestinationResult(
       {required this.direction,
@@ -19,7 +20,8 @@ class DestinationResult extends Equatable{
       required this.dropOffLatitude,
       required this.dropOffLongitude,
       required this.pickUpAddress,
-      required this.dropOffAddress});
+      required this.dropOffAddress,
+      required this.polyLinePoints});
 
   @override
   List<Object?> get props => [
@@ -29,7 +31,8 @@ class DestinationResult extends Equatable{
     dropOffLatitude,
     dropOffLongitude,
     pickUpAddress,
-    dropOffAddress
+    dropOffAddress,
+    polyLinePoints
   ];
 
 }

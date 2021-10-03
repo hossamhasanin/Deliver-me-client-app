@@ -120,7 +120,7 @@ class _BodyState extends State<Body> {
 
     ever(_setDestinationController.viewState , (_){
       if (_setDestinationController.viewState.value.direction.distanceText.isNotEmpty){
-        coordinates = polylinePoints.decodePolyline(_setDestinationController.viewState.value.direction!.encodedDirections)
+        coordinates = polylinePoints.decodePolyline(_setDestinationController.viewState.value.direction.encodedDirections)
             .map((point) => LatLng(point.latitude, point.longitude)).toList();
         polyline = polyline.copyWith(pointsParam: coordinates);
         pickUpMarker = pickUpMarker.copyWith(positionParam: _setDestinationController.viewState.value.currentPosition);
@@ -209,13 +209,14 @@ class _BodyState extends State<Body> {
                       onPressed: () {
                         if(_setDestinationController.viewState.value.isEveryThingValidToReturn()){
                           DestinationResult result = DestinationResult(
-                              direction: _setDestinationController.viewState.value.direction!,
+                              direction: _setDestinationController.viewState.value.direction,
                               pickUpLatitude: _setDestinationController.viewState.value.currentPosition.latitude,
                               pickUpLongitude: _setDestinationController.viewState.value.currentPosition.longitude,
                               dropOffLatitude: _setDestinationController.viewState.value.destinationPosition!.latitude,
                               dropOffLongitude: _setDestinationController.viewState.value.destinationPosition!.longitude,
                               pickUpAddress: _setDestinationController.viewState.value.currentPickedAddressWrapper.address,
-                              dropOffAddress: _setDestinationController.viewState.value.destinationPickedAddressWrapper.address
+                              dropOffAddress: _setDestinationController.viewState.value.destinationPickedAddressWrapper.address,
+                              polyLinePoints: coordinates
                           );
                           Get.back(result: result);
                         }

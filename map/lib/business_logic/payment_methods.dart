@@ -1,0 +1,3 @@
+enum PaymentMethods {
+  cash , creditCard
+}
