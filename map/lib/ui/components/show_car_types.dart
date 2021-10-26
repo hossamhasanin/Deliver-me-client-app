@@ -45,15 +45,6 @@ class ShowCarTypes extends StatelessWidget {
             child: ListView.builder(
                 itemCount: carTypes.length,
                 itemBuilder: (context , index){
-                  print(carTypes[index].icon);
-                  // return ListTile(
-                  //   onTap: (){
-                  //     selectCarType(controller.viewState.value.carTypes[index]);
-                  //   },
-                  //   selected: controller.viewState.value.carTypes[index] == pagesState.selectedCarType,
-                  //   // leading: Image(image: NetworkImage(pagesState.carTypes[index].icon),),
-                  //   title: Text(controller.viewState.value.carTypes[index].name),
-                  // );
                   return GestureDetector(
                     onTap: (){
                       selectCarType(carTypes[index]);

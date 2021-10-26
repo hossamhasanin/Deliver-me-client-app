@@ -180,15 +180,15 @@ class _BodyState extends State<Body> {
             left: 0.0,
             right: 0.0,
             child: Container(
-              height: 300.0,
+              height: 250.0,
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
                 boxShadow: [
                   BoxShadow(
                       color: Colors.grey,
-                      offset: Offset(0.0, -3.0),
-                      blurRadius: 5.0
+                      offset: Offset(0.0, -5.0),
+                      blurRadius: 8.0
                   )
                 ]
               ),

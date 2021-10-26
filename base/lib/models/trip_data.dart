@@ -37,5 +37,29 @@ class TripData extends Equatable {
     tripState
   ];
 
+  static TripData fromDocument(Map<String , dynamic> doc , Location? Function(Object?) geoPointToLocationAdapterFunction){
+    return TripData(
+        id: doc["id"],
+        destinationAddress: doc["destinationAddress"],
+        pickUpAddress: doc["pickUpAddress"],
+        pickUpLocation: geoPointToLocationAdapterFunction(doc["pickUpLocationMap"]["geopoint"]),
+        dropOffLocation: geoPointToLocationAdapterFunction(doc["dropOffLocation"]),
+        driverLocation: geoPointToLocationAdapterFunction(doc["driverLocation"]),
+        driverPersonalData: doc["driverId"] == null ? null : User(
+            id: doc["driverId"],
+            name: doc["driverName"],
+            email: doc["driverEmail"],
+            phone: doc["driverPhone"],
+            img: doc["driverImg"]),
+        clintPersonalData: User(
+            id: doc["clientId"],
+            name: doc["clientName"],
+            email: doc["clientEmail"],
+            phone: doc["clientPhone"],
+            img: doc["clientImg"]),
+        tripState: TripStates.values[doc["tripState"]],
+    );
+  }
+
 
 }

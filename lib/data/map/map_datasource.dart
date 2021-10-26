@@ -9,6 +9,7 @@ import 'package:base/models/trip_data.dart';
 import 'package:base/models/trip_states.dart';
 import 'package:base/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:map/business_logic/data/map_datasource.dart';
 import 'package:base/collections.dart';
 import 'package:map/business_logic/payment_methods.dart';
@@ -20,15 +21,18 @@ class MapDataSourceImp extends MapDataSource{
   @override
   Future assignCar(CarType carType, DestinationResult destinationResult , PaymentMethods paymentMethod) {
     CollectionReference query = _firestore.collection(ASSIGN_CAR);
+    GeoFirePoint pickUpLocation = GeoFirePoint(destinationResult.pickUpLatitude, destinationResult.pickUpLongitude);
+
     var map = {
       // "id" : _auth.currentUser.uid
       // TODO: Replace that with the auth user id
-      "id" : "userId",
+      "id" : "userId1",
       "carTypeId" : carType.id,
       "carTypeName" : carType.name,
       "carTypePrice" : carType.pricePerDistance,
       "dropOffLocation" : GeoPoint(destinationResult.dropOffLatitude, destinationResult.dropOffLongitude),
-      "pickUpLocation" : GeoPoint(destinationResult.pickUpLatitude, destinationResult.pickUpLongitude),
+      // "pickUpLocation" : GeoPoint(destinationResult.pickUpLatitude, destinationResult.pickUpLongitude),
+      "pickUpLocationMap": pickUpLocation.data,
       "pickUpAddress" : destinationResult.pickUpAddress.name,
       "dropOffAddress" : destinationResult.dropOffAddress.name,
       "encodedPolyLinePoints" : destinationResult.direction.encodedDirections,
@@ -37,7 +41,7 @@ class MapDataSourceImp extends MapDataSource{
       "durationText" : destinationResult.direction.durationText,
       "durationValue" : destinationResult.direction.durationValue,
       "paymentMethod" : paymentMethod.toString(),
-      "tripState" : TripStates.driverNotHere.index,
+      "tripState" : TripStates.noDriverAssigned.index,
 
       "driverLocation" : const GeoPoint(31.006384, 31.383271),
       "driverId": "koko",
@@ -46,7 +50,8 @@ class MapDataSourceImp extends MapDataSource{
       "driverPhone" : "1223456789",
       "driverImg": "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8ZHJpdmluZ3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80"
     };
-    return query.doc("userId").set(map);
+
+    return query.doc("userId1").set(map);
   }
 
   @override
@@ -76,34 +81,37 @@ class MapDataSourceImp extends MapDataSource{
   Stream<TripData?> listenToTheTrip() {
     // TODO: Replace userId with the actual user auth id
 
-    DocumentReference<Map<String, dynamic>> query = _firestore.collection(ASSIGN_CAR).doc("userId");
+    DocumentReference<Map<String, dynamic>> query = _firestore.collection(ASSIGN_CAR).doc("userId1");
     return query.snapshots().map((snapshot) {
       if (snapshot.exists){
           print(snapshot.data());
-          GeoPoint pickUpLocation = snapshot.data()!["pickUpLocation"];
-          GeoPoint dropOffLocation = snapshot.data()!["dropOffLocation"];
-          GeoPoint? driverLocation = snapshot.data()!["driverLocation"];
-          return TripData(
-              id: snapshot.id,
-              destinationAddress: snapshot.data()!["dropOffAddress"],
-              pickUpAddress: snapshot.data()!["pickUpAddress"],
-              pickUpLocation: Location(latitude: pickUpLocation.latitude , longitude: pickUpLocation.longitude),
-              dropOffLocation: Location(latitude: dropOffLocation.latitude , longitude: dropOffLocation.longitude),
-              driverLocation: driverLocation == null ? null : Location(latitude: driverLocation.latitude , longitude: driverLocation.longitude),
-              driverPersonalData: driverLocation == null ? null : User(
-                  id: snapshot.data()!["driverId"],
-                  name: snapshot.data()!["driverName"],
-                  email: snapshot.data()!["driverEmail"],
-                  phone: snapshot.data()!["driverPhone"],
-                  img: snapshot.data()!["driverImg"]),
-              clintPersonalData: User(
-                  id: snapshot.data()!["clientId"],
-                  name: snapshot.data()!["clientName"],
-                  email: snapshot.data()!["clientEmail"],
-                  phone: snapshot.data()!["clientPhone"],
-                  img: snapshot.data()!["clientImg"]),
-              tripState: TripStates.values[snapshot.data()!["tripState"]]);
-
+          // GeoPoint pickUpLocation = snapshot.data()!["pickUpLocation"];
+          // GeoPoint dropOffLocation = snapshot.data()!["dropOffLocation"];
+          // GeoPoint? driverLocation = snapshot.data()!["driverLocation"];
+          // return TripData(
+          //     id: snapshot.id,
+          //     destinationAddress: snapshot.data()!["dropOffAddress"],
+          //     pickUpAddress: snapshot.data()!["pickUpAddress"],
+          //     pickUpLocation: Location(latitude: pickUpLocation.latitude , longitude: pickUpLocation.longitude),
+          //     dropOffLocation: Location(latitude: dropOffLocation.latitude , longitude: dropOffLocation.longitude),
+          //     driverLocation: driverLocation == null ? null : Location(latitude: driverLocation.latitude , longitude: driverLocation.longitude),
+          //     driverPersonalData: driverLocation == null ? null : User(
+          //         id: snapshot.data()!["driverId"],
+          //         name: snapshot.data()!["driverName"],
+          //         email: snapshot.data()!["driverEmail"],
+          //         phone: snapshot.data()!["driverPhone"],
+          //         img: snapshot.data()!["driverImg"]),
+          //     clintPersonalData: User(
+          //         id: snapshot.data()!["clientId"],
+          //         name: snapshot.data()!["clientName"],
+          //         email: snapshot.data()!["clientEmail"],
+          //         phone: snapshot.data()!["clientPhone"],
+          //         img: snapshot.data()!["clientImg"]),
+          //     tripState: TripStates.values[snapshot.data()!["tripState"]]);
+          return TripData.fromDocument(snapshot.data()!, (Object? geoPoint) {
+            if (geoPoint == null) return null;
+            return Location(latitude: (geoPoint as GeoPoint).latitude, longitude: geoPoint.longitude);
+          });
       } else {
         return null;
       }

@@ -38,6 +38,7 @@ dependencies:
   http:
   firebase_core: "^1.6.0"
   cloud_firestore: "^2.5.3"
+  geoflutterfire: ^3.0.1
 
   login:
     path: login

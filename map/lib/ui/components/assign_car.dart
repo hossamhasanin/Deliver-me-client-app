@@ -19,11 +19,16 @@ class AssignCar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 20.0,),
-          DriverDataWidget(driverPersonalData: driverData.driverPersonalData!,),
           Padding(
             padding: const EdgeInsets.only(left: 20.0 , top: 5.0),
-            child: Text("Driver is " + durationTillDriverCome + " away, you can see him on the map ."),
+            child: Text("Driver is " + durationTillDriverCome + " away, you can see him on the map .",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20.0
+                        ),),
           ),
+          const SizedBox(height: 10.0,),
+          DriverDataWidget(driverPersonalData: driverData.driverPersonalData!,),
           Expanded(
             child: Align(
               alignment: Alignment.bottomCenter,
@@ -32,12 +37,23 @@ class AssignCar extends StatelessWidget {
                 children: [
                   ElevatedButton(
                       onPressed: (){},
-                      child: const Text("Call")
+                      child: const Text("Call"),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.green
+                    ),
                   ),
                   const SizedBox(width: 20.0,),
                   ElevatedButton(
                       onPressed: (){},
-                      child: const Text("Chat")
+                      child: const Text("Chat"),
+                  ),
+                  const SizedBox(width: 20.0,),
+                  ElevatedButton(
+                      onPressed: (){},
+                      child: const Text("Cancel"),
+                    style: ElevatedButton.styleFrom(
+                        primary: Colors.red
+                    ),
                   ),
                 ],
               ),

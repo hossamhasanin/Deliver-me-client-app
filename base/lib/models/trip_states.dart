@@ -1,3 +1,3 @@
 enum TripStates{
-  driverNotHere , driverArrived , tripRunning , endTrip
+  noDriverAssigned , driverNotHere , driverArrived , tripRunning , endTrip
 }

@@ -10,23 +10,24 @@ class DriverDataWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(15.0),
       child: Row(
         children: [
           CircleAvatar(
             backgroundImage: NetworkImage(driverPersonalData.img!),
-            radius: 30.0,
+            radius: 35.0,
           ),
           const SizedBox(width: 15.0,),
           Column(
             children: [
               Text(driverPersonalData.name! , style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 18.0
+                fontSize: 20.0
               ),),
               const SizedBox(height: 10.0,),
               Text(driverPersonalData.email! , style: const TextStyle(
-                  color: Colors.grey
+                  color: Colors.grey,
+                  fontSize: 15.0
               ))
             ],
           )
