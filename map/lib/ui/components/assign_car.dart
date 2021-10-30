@@ -13,7 +13,7 @@ class AssignCar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return driverData.location == null ? waiting() : Container(
+    return driverData.location.latitude == 0.0 ? waiting() : Container(
       height: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,7 +28,7 @@ class AssignCar extends StatelessWidget {
                         ),),
           ),
           const SizedBox(height: 10.0,),
-          DriverDataWidget(driverPersonalData: driverData.driverPersonalData!,),
+          DriverDataWidget(driverPersonalData: driverData.driverPersonalData,),
           Expanded(
             child: Align(
               alignment: Alignment.bottomCenter,

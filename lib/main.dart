@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:login/ui/login_screen.dart';
 import 'package:map/ui/map_screen.dart';
 import 'package:set_destination/ui/set_destination_screen.dart';
+import 'package:splash/ui/splash_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
 
             if (state.connectionState == ConnectionState.done){
               inject();
-              return const MapScreen();
+              return const SplashScreen();
             }
 
             return const Scaffold(
@@ -46,8 +47,9 @@ class MyApp extends StatelessWidget {
             );
       }),
       getPages: [
+        GetPage(name: SPLASH_SCREEN, page:()=> const SplashScreen()),
         GetPage(name: LOGIN_SCREEN, page:()=> const LoginScreen()),
-        GetPage(name: MAP_SCREEN, page:()=> const MapScreen()),
+        GetPage(name: MAP_SCREEN, page:()=> MapScreen()),
         GetPage(name: SET_DESTINATION_SCREEN, page:()=> const SetDestinationScreen())
       ],
     );

@@ -14,7 +14,6 @@ class PagesState{
   PagesState copy({
     int? page,
     List<CarType>? carTypes,
-    DestinationResult? destinationResult,
     bool? loading,
     String?  error
   }){
@@ -23,6 +22,15 @@ class PagesState{
         carTypes: carTypes ?? this.carTypes,
         loading: loading ?? this.loading,
         error: error ?? this.error
+    );
+  }
+
+  static PagesState initState(){
+    return PagesState(
+      loading: false,
+      error: "",
+      page: 0,
+      carTypes: [],
     );
   }
 

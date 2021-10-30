@@ -8,5 +8,5 @@ abstract class MapDataSource{
 
   Future assignCar(CarType carType , DestinationResult destinationResultv , PaymentMethods paymentMethod);
 
-  Stream<TripData?> listenToTheTrip();
+  Future<Stream<TripData?>> listenToTheTrip();
 }

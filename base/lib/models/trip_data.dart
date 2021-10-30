@@ -7,6 +7,11 @@ class TripData extends Equatable {
   final String? id;
   final String? destinationAddress;
   final String? pickUpAddress;
+  final String? distanceText;
+  final int? distanceValue;
+  final int? durationValue;
+  final String? durationText;
+  final String? encodedDirections;
   final Location? pickUpLocation;
   final Location? dropOffLocation;
   final Location? driverLocation;
@@ -15,15 +20,20 @@ class TripData extends Equatable {
   final TripStates? tripState;
 
   TripData(
-      {required this.id,
-      required this.destinationAddress,
-      required this.pickUpAddress,
-      required this.pickUpLocation,
-      required this.dropOffLocation,
-      required this.driverLocation,
-      required this.driverPersonalData,
-      required this.clintPersonalData,
-      required this.tripState});
+      { this.id,
+       this.destinationAddress,
+       this.pickUpAddress,
+       this.pickUpLocation,
+       this.dropOffLocation,
+       this.durationText,
+       this.durationValue,
+       this.distanceText,
+       this.distanceValue,
+       this.encodedDirections,
+       this.driverLocation,
+       this.driverPersonalData,
+       this.clintPersonalData,
+       this.tripState});
 
   @override
   List<Object?> get props => [
@@ -34,13 +44,18 @@ class TripData extends Equatable {
     dropOffLocation,
     driverLocation,
     driverPersonalData,
-    tripState
+    tripState,
+    durationValue,
+    durationText,
+    distanceText,
+    distanceValue,
+    encodedDirections
   ];
 
   static TripData fromDocument(Map<String , dynamic> doc , Location? Function(Object?) geoPointToLocationAdapterFunction){
     return TripData(
         id: doc["id"],
-        destinationAddress: doc["destinationAddress"],
+        destinationAddress: doc["dropOffAddress"],
         pickUpAddress: doc["pickUpAddress"],
         pickUpLocation: geoPointToLocationAdapterFunction(doc["pickUpLocationMap"]["geopoint"]),
         dropOffLocation: geoPointToLocationAdapterFunction(doc["dropOffLocation"]),
@@ -58,6 +73,11 @@ class TripData extends Equatable {
             phone: doc["clientPhone"],
             img: doc["clientImg"]),
         tripState: TripStates.values[doc["tripState"]],
+        distanceValue: doc["distanceValue"],
+        distanceText: doc["distanceText"],
+        durationText: doc["durationText"],
+        durationValue: doc["durationValue"],
+        encodedDirections: doc["encodedPolyLinePoints"]
     );
   }
 

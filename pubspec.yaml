@@ -48,6 +48,8 @@ dependencies:
     path: map
   set_destination:
     path: set_destination
+  splash:
+    path: splash
 
 dev_dependencies:
   flutter_test:

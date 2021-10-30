@@ -308,6 +308,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.8.1"
+  splash:
+    dependency: "direct main"
+    description:
+      path: splash
+      relative: true
+    source: path
+    version: "1.0.0+1"
   stack_trace:
     dependency: transitive
     description:

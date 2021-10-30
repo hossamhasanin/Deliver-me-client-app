@@ -9,6 +9,7 @@ import 'package:base/models/trip_data.dart';
 import 'package:base/models/trip_states.dart';
 import 'package:base/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:deliver_me/data/user/user_provider.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:map/business_logic/data/map_datasource.dart';
 import 'package:base/collections.dart';
@@ -17,16 +18,24 @@ import 'package:map/business_logic/payment_methods.dart';
 class MapDataSourceImp extends MapDataSource{
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final UserProvider _userProvider;
+  MapDataSourceImp(this._userProvider);
+
 
   @override
-  Future assignCar(CarType carType, DestinationResult destinationResult , PaymentMethods paymentMethod) {
+  Future assignCar(CarType carType, DestinationResult destinationResult , PaymentMethods paymentMethod) async {
     CollectionReference query = _firestore.collection(ASSIGN_CAR);
     GeoFirePoint pickUpLocation = GeoFirePoint(destinationResult.pickUpLatitude, destinationResult.pickUpLongitude);
-
+    var user = await _getUser();
     var map = {
-      // "id" : _auth.currentUser.uid
+      "id" : user.id,
       // TODO: Replace that with the auth user id
-      "id" : "userId1",
+      "clientId" : user.id,
+      "clientName": user.name,
+      "clientEmail": user.email,
+      "clientPhone": user.phone,
+      "clientImg": user.img,
+
       "carTypeId" : carType.id,
       "carTypeName" : carType.name,
       "carTypePrice" : carType.pricePerDistance,
@@ -51,7 +60,7 @@ class MapDataSourceImp extends MapDataSource{
       "driverImg": "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8ZHJpdmluZ3xlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&w=1000&q=80"
     };
 
-    return query.doc("userId1").set(map);
+    return query.doc(user.id).set(map);
   }
 
   @override
@@ -78,10 +87,12 @@ class MapDataSourceImp extends MapDataSource{
   }
 
   @override
-  Stream<TripData?> listenToTheTrip() {
+  Future<Stream<TripData?>> listenToTheTrip() async {
     // TODO: Replace userId with the actual user auth id
+    print("koko listenToTheTrip");
 
-    DocumentReference<Map<String, dynamic>> query = _firestore.collection(ASSIGN_CAR).doc("userId1");
+    var user = await _getUser();
+    DocumentReference<Map<String, dynamic>> query = _firestore.collection(ASSIGN_CAR).doc(user.id);
     return query.snapshots().map((snapshot) {
       if (snapshot.exists){
           print(snapshot.data());
@@ -116,6 +127,11 @@ class MapDataSourceImp extends MapDataSource{
         return null;
       }
     });
+  }
+
+  Future<User> _getUser() async{
+    var u = await _userProvider.userData().last;
+    return u!;
   }
 
 }

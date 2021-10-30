@@ -37,15 +37,19 @@ class MapUseCase{
     }
   }
 
-  listenToTheTrip(Rx<DriverData> driverData , Rx<TripStates?> tripState , Rx<PagesState> viewState) async {
-    _dataSource.listenToTheTrip().listen((TripData? tripData) {
-      if (tripData != null){
-        if (tripData.driverLocation != driverData.value.location){
-          tripState.value = tripData.tripState;
-          viewState.value = viewState.value.copy(loading: false);
-          driverData.value = driverData.value.copy(driverPersonalData: tripData.driverPersonalData , location: tripData.driverLocation);
-        }
-      }
+  // tripState.value = tripData.tripState;
+  // viewState.value = viewState.value.copy(loading: false);
+  // driverData.value = driverData.value.copy(driverPersonalData: tripData.driverPersonalData , location: tripData.driverLocation);
+
+  Future<Stream<List>> listenToTheTrip(DriverData driverData , TripStates tripState , PagesState viewState) async {
+    print("koko trip usecase");
+    return (await _dataSource.listenToTheTrip()).where((trip) => trip != null ? (trip.driverLocation != driverData.location || tripState != trip.tripState!) : false).map((TripData? tripData) {
+      print("koko usecase tripstate "+tripData!.tripState.toString());
+      return [tripData.tripState ,
+        viewState.copy(loading: false) ,
+        driverData.copy(driverPersonalData: tripData.driverPersonalData ,
+            location: tripData.driverLocation)
+      ];
     });
   }
 
